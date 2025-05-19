@@ -1,0 +1,6 @@
+#-------------------------------------------------------------------------------
+# AUTHORS: Jan Kubalek <kubalekj492@gmail.com>
+# LICENSE: The MIT License, please read LICENSE file
+#-------------------------------------------------------------------------------
+
+PROJECT_REVISION = "pipelined_heap"
