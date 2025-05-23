@@ -53,7 +53,7 @@ logic [META_WIDTH-1:0] in_meta_reg;
 heap_op_t              in_op_reg;
 logic                  in_op_vld_reg;
 
-localparam MAX_STAGE_ITEMS = getStageItems(STAGES_NUM+1);
+localparam MAX_STAGE_ITEMS = getStageItems(STAGES_NUM+3); // +3 for reserve on signals width
 localparam MAX_PARALLEL_MEMS = getParallelMems(MAX_STAGE_ITEMS);
 localparam MAX_MEM_SIZE = getMemSize(MAX_STAGE_ITEMS, MAX_PARALLEL_MEMS);
 localparam MAX_MEM_ADDR_WIDTH = getMemAddrWidth(MAX_MEM_SIZE);
