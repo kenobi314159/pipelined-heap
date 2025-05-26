@@ -115,6 +115,13 @@ logic [PARALLEL_MEMS-1:0]                     up_mem_vld_reg;
 logic                    [TS_WIDTH-1:0]       mem_w_data_single_ts;
 logic                    [META_WIDTH-1:0]     mem_w_data_single_meta;
 
+logic [TS_WIDTH-1:0]                          down_op_next_mem_timestamp;
+logic [META_WIDTH-1:0]                        down_op_next_mem_meta;
+logic [TS_WIDTH-1:0]                          down_op_next_in_timestamp;
+logic [META_WIDTH-1:0]                        down_op_next_in_meta;
+logic [GLOBAL_PTR_WIDTH-1:0]                  down_op_next_ptr;
+heap_op_t                                     down_op_next_code;
+
 localparam [LOCAL_PTR_WIDTH+1-1:0] full_fill_value = '{LOCAL_PTR_WIDTH:'0, default:'1};
 
 logic [LOCAL_PTR_WIDTH+1-1:0] fill_cntr_reg;
@@ -287,15 +294,6 @@ always_comb begin
     mem_r_addr = up_up_mem_addr;
     up_mem_timestamp = mem_r_data_ts;
     up_mem_meta      = mem_r_data_meta;
-    // Bypass to currently written value if it is being written to the same address
-    if (mem_w_addr == mem_r_addr_reg) begin
-        for (int i=0; i < PARALLEL_MEMS; i++) begin
-            if (mem_w_en[i]) begin
-                up_mem_timestamp[i] = mem_w_data_ts  [i];
-                up_mem_meta     [i] = mem_w_data_meta[i];
-            end
-        end
-    end
     // Bypass to next written value if it will be written to the same address
     if (up_op_addr == mem_r_addr_reg) begin
         if (up_op_code == INSERT) begin
@@ -394,59 +392,59 @@ end
 ////////////////////////////////
 // Performing operation
 
-always_ff @(posedge clk) begin
-    down_op_mem_timestamp  <= selected_down_mem_timestamp[0];
-    down_op_mem_meta       <= selected_down_mem_meta     [0];
-    down_op_in_timestamp   <= up_op_in_timestamp;
-    down_op_in_meta        <= up_op_in_meta;
-    down_op_ptr            <= up_op_ptr;
-    down_op_code           <= NONE;
-    mem_w_addr             <= up_op_addr;
-    mem_w_data_single_ts   <= up_op_mem_timestamp;
-    mem_w_data_single_meta <= up_op_mem_meta;
-    mem_w_en               <= '0;
-    mem_w_new_insert       <= 0;
-    mem_w_replace_last     <= 0;
+always_comb begin
+    down_op_next_mem_timestamp  = selected_down_mem_timestamp[0];
+    down_op_next_mem_meta       = selected_down_mem_meta     [0];
+    down_op_next_in_timestamp   = up_op_in_timestamp;
+    down_op_next_in_meta        = up_op_in_meta;
+    down_op_next_ptr            = up_op_ptr;
+    down_op_next_code           = NONE;
+    mem_w_addr                  = up_op_addr;
+    mem_w_data_single_ts        = up_op_mem_timestamp;
+    mem_w_data_single_meta      = up_op_mem_meta;
+    mem_w_en                    = '0;
+    mem_w_new_insert            = 0;
+    mem_w_replace_last          = 0;
 
     if (up_op_code == REPLACE) begin
         if (   not_replacing_child0
             && not_replacing_child1
            ) begin
             // Replace current memory value with operation value
-            mem_w_data_single_ts   <= up_op_in_timestamp;
-            mem_w_data_single_meta <= up_op_in_meta;
-            mem_w_en[up_op_idx]    <= 1;
-            mem_w_replace_last     <= (up_op_addr == last_vld_item_ptr_next_addr && up_op_idx == last_vld_item_ptr_next_idx);
+            mem_w_data_single_ts   = up_op_in_timestamp;
+            mem_w_data_single_meta = up_op_in_meta;
+            mem_w_en[up_op_idx]    = 1;
+            mem_w_replace_last     = (up_op_addr == last_vld_item_ptr_next_addr && up_op_idx == last_vld_item_ptr_next_idx);
         end else if (
                replacing_child0_over_child1
            ) begin
             // Replace current memory value with child 0
             // and propagate operation to child 0
-            mem_w_data_single_ts   <= selected_down_mem_timestamp[0];
-            mem_w_data_single_meta <= selected_down_mem_meta     [0];
-            mem_w_en[up_op_idx]    <= 1;
+            mem_w_data_single_ts   = selected_down_mem_timestamp[0];
+            mem_w_data_single_meta = selected_down_mem_meta     [0];
+            mem_w_en[up_op_idx]    = 1;
 
-            down_op_mem_timestamp  <= selected_down_mem_timestamp[0];
-            down_op_mem_meta       <= selected_down_mem_meta     [0];
-            down_op_in_timestamp   <= up_op_in_timestamp;
-            down_op_in_meta        <= up_op_in_meta;
-            down_op_ptr            <= up_op_ptr;
-            down_op_code           <= REPLACE;
-            down_op_ptr[GLOBAL_PTR_WIDTH-LOCAL_PTR_WIDTH-1] <= 0;
+            down_op_next_mem_timestamp  = selected_down_mem_timestamp[0];
+            down_op_next_mem_meta       = selected_down_mem_meta     [0];
+            down_op_next_in_timestamp   = up_op_in_timestamp;
+            down_op_next_in_meta        = up_op_in_meta;
+            down_op_next_ptr            = up_op_ptr;
+            down_op_next_code           = REPLACE;
+            down_op_next_ptr[GLOBAL_PTR_WIDTH-LOCAL_PTR_WIDTH-1] = 0;
         end else begin
             // Replace current memory value with child 1
             // and propagate operation to child 1
-            mem_w_data_single_ts   <= selected_down_mem_timestamp[1];
-            mem_w_data_single_meta <= selected_down_mem_meta     [1];
-            mem_w_en[up_op_idx]    <= 1;
+            mem_w_data_single_ts   = selected_down_mem_timestamp[1];
+            mem_w_data_single_meta = selected_down_mem_meta     [1];
+            mem_w_en[up_op_idx]    = 1;
 
-            down_op_mem_timestamp  <= selected_down_mem_timestamp[1];
-            down_op_mem_meta       <= selected_down_mem_meta     [1];
-            down_op_in_timestamp   <= up_op_in_timestamp;
-            down_op_in_meta        <= up_op_in_meta;
-            down_op_ptr            <= up_op_ptr;
-            down_op_code           <= REPLACE;
-            down_op_ptr[GLOBAL_PTR_WIDTH-LOCAL_PTR_WIDTH-1] <= 1;
+            down_op_next_mem_timestamp  = selected_down_mem_timestamp[1];
+            down_op_next_mem_meta       = selected_down_mem_meta     [1];
+            down_op_next_in_timestamp   = up_op_in_timestamp;
+            down_op_next_in_meta        = up_op_in_meta;
+            down_op_next_ptr            = up_op_ptr;
+            down_op_next_code           = REPLACE;
+            down_op_next_ptr[GLOBAL_PTR_WIDTH-LOCAL_PTR_WIDTH-1] = 1;
         end
     end else if (up_op_code == INSERT) begin
         if (   !up_last_insert_take) begin
@@ -454,28 +452,37 @@ always_ff @(posedge clk) begin
                ) begin
                 // Insert operation value instead of current memory value
                 // and propagate insert if this stage is already full
-                mem_w_data_single_ts   <= up_op_in_timestamp;
-                mem_w_data_single_meta <= up_op_in_meta;
-                mem_w_en[up_op_idx]    <= 1;
-                mem_w_new_insert       <= !stage_full;
+                mem_w_data_single_ts   = up_op_in_timestamp;
+                mem_w_data_single_meta = up_op_in_meta;
+                mem_w_en[up_op_idx]    = 1;
+                mem_w_new_insert       = !stage_full;
 
-                down_op_mem_timestamp  <= selected_down_mem_timestamp[up_op_next_idx_low];
-                down_op_mem_meta       <= selected_down_mem_meta     [up_op_next_idx_low];
-                down_op_in_timestamp   <= up_op_mem_timestamp;
-                down_op_in_meta        <= up_op_mem_meta;
-                down_op_ptr            <= up_op_ptr;
-                down_op_code           <= (stage_full) ? INSERT : NONE;
+                down_op_next_mem_timestamp  = selected_down_mem_timestamp[up_op_next_idx_low];
+                down_op_next_mem_meta       = selected_down_mem_meta     [up_op_next_idx_low];
+                down_op_next_in_timestamp   = up_op_mem_timestamp;
+                down_op_next_in_meta        = up_op_mem_meta;
+                down_op_next_ptr            = up_op_ptr;
+                down_op_next_code           = (stage_full) ? INSERT : NONE;
             end else begin
                 // Propagate insert with the same value
-                down_op_mem_timestamp  <= selected_down_mem_timestamp[up_op_next_idx_low];
-                down_op_mem_meta       <= selected_down_mem_meta     [up_op_next_idx_low];
-                down_op_in_timestamp   <= up_op_in_timestamp;
-                down_op_in_meta        <= up_op_in_meta;
-                down_op_ptr            <= up_op_ptr;
-                down_op_code           <= INSERT;
+                down_op_next_mem_timestamp  = selected_down_mem_timestamp[up_op_next_idx_low];
+                down_op_next_mem_meta       = selected_down_mem_meta     [up_op_next_idx_low];
+                down_op_next_in_timestamp   = up_op_in_timestamp;
+                down_op_next_in_meta        = up_op_in_meta;
+                down_op_next_ptr            = up_op_ptr;
+                down_op_next_code           = INSERT;
             end
         end
     end
+end
+
+always_ff @(posedge clk) begin
+    down_op_mem_timestamp <= down_op_next_mem_timestamp;
+    down_op_mem_meta      <= down_op_next_mem_meta;
+    down_op_in_timestamp  <= down_op_next_in_timestamp;
+    down_op_in_meta       <= down_op_next_in_meta;
+    down_op_ptr           <= down_op_next_ptr;
+    down_op_code          <= down_op_next_code;
 
     // If last valid item needs to be updated from memory, prevent all changes in the output registers
     if (up_last_insert_take && up_last_insert_in_mem) begin
@@ -488,7 +495,6 @@ always_ff @(posedge clk) begin
     end
 
     if (rst) begin
-        mem_w_en     <= '0;
         down_op_code <= NONE;
     end
 end
@@ -541,13 +547,6 @@ end
 always_comb begin
     last_vld_item_timestamp = last_vld_item_timestamp_reg;
     last_vld_item_meta      = last_vld_item_meta_reg;
-    // Last valid item is being replaced or new one is being inserted
-    if (   mem_w_replace_last
-        || mem_w_new_insert
-       ) begin
-        last_vld_item_timestamp = mem_w_data_single_ts;
-        last_vld_item_meta      = mem_w_data_single_meta;
-    end
 end
 
 always_ff @(posedge clk) begin
