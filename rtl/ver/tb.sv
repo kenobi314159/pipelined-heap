@@ -43,6 +43,8 @@ logic                  model_heap_front_vld;
 logic [TS_WIDTH-1:0]   model_heap_front_ts;
 logic [META_WIDTH-1:0] model_heap_front_meta;
 
+logic insert_eq;
+
 // 1 - more inserts than deletes
 // 0 - more deletes than inserts
 logic op_direction_reg;
@@ -287,6 +289,8 @@ always_ff @(posedge clk) begin
         end
     end
 end
+
+assign insert_eq = (in_op == INSERT) && (out_front_vld && out_front_timestamp == in_timestamp);
 
 // Update golden model
 always_ff @(posedge clk) begin
