@@ -5,7 +5,7 @@
 
 import pipelined_heap_pkg::*;
 
-module pipelined_heap
+module pipelined_heap_tree
 #(
     // Number of elements in the heap
     // (Optimal number is 2^n - 1)
