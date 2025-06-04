@@ -485,7 +485,7 @@ always_ff @(posedge clk) begin
     down_op_code          <= down_op_next_code;
 
     // If last valid item needs to be updated from memory, prevent all changes in the output registers
-    if (up_last_insert_take && up_last_insert_in_mem) begin
+    if (up_last_insert_take_from_mem) begin
         down_op_mem_timestamp <= down_op_mem_timestamp;
         down_op_mem_meta      <= down_op_mem_meta;
         down_op_in_timestamp  <= down_op_in_timestamp;
