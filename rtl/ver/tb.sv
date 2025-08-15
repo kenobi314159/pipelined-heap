@@ -8,6 +8,7 @@ import pipelined_heap_pkg::*;
 module tb;
 
 // DUT parameters
+localparam IMPLEMENTATION = "linear"; // "tree", "linear"
 localparam ITEMS = 1111;
 localparam TS_WIDTH = 12;
 localparam META_WIDTH = 4;
@@ -140,22 +141,49 @@ function void set_input(
     in_op        = op;
 endfunction
 
-pipelined_heap
-#(
-    .ITEMS      (ITEMS     )
-   ,.TS_WIDTH   (TS_WIDTH  )
-   ,.META_WIDTH (META_WIDTH)
-) dut_i (
-    .clk                 (clk                )
-   ,.rst                 (rst                )
-   ,.in_timestamp        (in_timestamp       )
-   ,.in_meta             (in_meta            )
-   ,.in_op               (in_op              )
-   ,.in_ready            (in_ready           )
-   ,.out_front_timestamp (out_front_timestamp)
-   ,.out_front_meta      (out_front_meta     )
-   ,.out_front_vld       (out_front_vld      )
-);
+// DUT instantiation
+generate
+if (IMPLEMENTATION == "linear") begin : gen_pipelined_heap_linear
+
+    pipelined_heap_linear
+    #(
+        .ITEMS      (ITEMS     )
+       ,.TS_WIDTH   (TS_WIDTH  )
+       ,.META_WIDTH (META_WIDTH)
+    ) dut_i (
+        .clk                 (clk                )
+       ,.rst                 (rst                )
+       ,.in_timestamp        (in_timestamp       )
+       ,.in_meta             (in_meta            )
+       ,.in_op               (in_op              )
+       ,.out_front_timestamp (out_front_timestamp)
+       ,.out_front_meta      (out_front_meta     )
+       ,.out_front_vld       (out_front_vld      )
+    );
+
+    assign in_ready = 1;
+
+end else if (IMPLEMENTATION == "tree") begin : gen_pipelined_heap_tree
+
+    pipelined_heap_tree
+    #(
+        .ITEMS      (ITEMS     )
+       ,.TS_WIDTH   (TS_WIDTH  )
+       ,.META_WIDTH (META_WIDTH)
+    ) dut_i (
+        .clk                 (clk                )
+       ,.rst                 (rst                )
+       ,.in_timestamp        (in_timestamp       )
+       ,.in_meta             (in_meta            )
+       ,.in_op               (in_op              )
+       ,.in_ready            (in_ready           )
+       ,.out_front_timestamp (out_front_timestamp)
+       ,.out_front_meta      (out_front_meta     )
+       ,.out_front_vld       (out_front_vld      )
+    );
+
+end
+endgenerate
 
 // Clock generation
 initial begin

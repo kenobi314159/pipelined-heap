@@ -2,16 +2,20 @@
 PROJECT_NAME = pipelined_heap
 
 # Module parameters
+# Supported implementation variants
+# 0 - linear
+# 1 - tree
+IMPLEMENTATION=0
 ITEMS=7
 TS_WIDTH=32
 META_WIDTH=16
 
 all:
-	ITEMS=$(ITEMS) TS_WIDTH=$(TS_WIDTH) META_WIDTH=$(META_WIDTH) \
+	IMPLEMENTATION=$(IMPLEMENTATION) ITEMS=$(ITEMS) TS_WIDTH=$(TS_WIDTH) META_WIDTH=$(META_WIDTH) \
 	quartus_sh --flow compile ${PROJECT_NAME}
 
 open:
-	export ITEMS=$(ITEMS) TS_WIDTH=$(TS_WIDTH) META_WIDTH=$(META_WIDTH) && \
+	export IMPLEMENTATION=$(IMPLEMENTATION) ITEMS=$(ITEMS) TS_WIDTH=$(TS_WIDTH) META_WIDTH=$(META_WIDTH) && \
 	quartus $(PROJECT_NAME).qpf
 
 clean:
