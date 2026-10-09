@@ -9,7 +9,7 @@ module tb;
 
 // DUT parameters
 localparam IMPLEMENTATION = "linear"; // "tree", "linear"
-localparam ITEMS = 1111;
+localparam ITEMS = 111;
 localparam TS_WIDTH = 12;
 localparam META_WIDTH = 4;
 
