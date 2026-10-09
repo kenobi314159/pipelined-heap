@@ -8,15 +8,15 @@ import pipelined_heap_pkg::*;
 module tb;
 
 // DUT parameters
-localparam IMPLEMENTATION = "linear"; // "tree", "linear"
-localparam ITEMS = 111;
-localparam TS_WIDTH = 12;
-localparam META_WIDTH = 4;
+parameter IMPLEMENTATION = "linear"; // "tree", "linear"
+parameter ITEMS = 111;
+parameter TS_WIDTH = 12;
+parameter META_WIDTH = 4;
 
 // Test parameters
-localparam MIN_DIRECTION_INTERVAL_LENGTH = ITEMS*4;
-localparam MAX_DIRECTION_INTERVAL_LENGTH = ITEMS*10;
-localparam TEST_OPERATIONS = MAX_DIRECTION_INTERVAL_LENGTH*10;
+parameter MIN_DIRECTION_INTERVAL_LENGTH = ITEMS*4;
+parameter MAX_DIRECTION_INTERVAL_LENGTH = ITEMS*10;
+parameter TEST_OPERATIONS = MAX_DIRECTION_INTERVAL_LENGTH*10;
 
 logic clk;
 logic rst;
